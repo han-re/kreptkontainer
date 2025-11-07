@@ -1,6 +1,10 @@
+# Virtual environments
 venv/
 backend/venv/
+
+# Python cache files
 __pycache__/
 *.pyc
-.env
-.DS_Store
+
+# System and recovery folders
+recover-files/
