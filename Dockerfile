@@ -14,6 +14,6 @@ COPY . .
 EXPOSE 5000
 
 #Run Flask App
-CMD ["python", "app.py"]
+CMD ["python", "backend/app.py"]
 
 
