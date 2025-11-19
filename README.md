@@ -520,6 +520,19 @@ kubectl scale deployment flask-api-deployment --replicas=3
 
 ---
 
+## Day 9: Kubernetes Scaling & Resilience Demo
+
+### Scaling
+- Started with 2 replicas
+- Scaled to 4 replicas using: `kubectl scale deployment flask-api-deployment --replicas=4`
+- ![Kubernetes Scaling](img/k8s_day9.png)
+
+### Self-Healing
+- Deleted one pod to simulate failure
+- Kubernetes automatically created a replacement
+- [Screenshot: Pod recreation in progress]
+- Zero downtime for the service!
+
 ## 💡 Reflection
 
 Day 8 was crucial for understanding how Kubernetes exposes applications to the outside world. The journey from 404 errors to successfully seeing load balancing in action taught me:
