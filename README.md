@@ -1,4 +1,4 @@
-# Docker & Kubernetes — Days 1 to 8
+# Docker & Kubernetes — Days 1 to 9
 
 This document summarizes what I learned over the first eight days of working with **Docker** and **Kubernetes**. The goal was to understand how to containerize a simple Flask application and run it consistently across different environments, then deploy it to Kubernetes for orchestration.
 
