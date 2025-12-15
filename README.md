@@ -1,6 +1,6 @@
 # KreptKon - Docker & Kubernetes Learning Project
 
-Learning Docker and Kubernetes by building and deploying a Flask API. This project follows a 14-day roadmap to go from basic Flask to a fully orchestrated Kubernetes deployment.
+Learning Docker and Kubernetes by building and deploying a Flask API. This project follows a roadmap to go from basic Flask to a fully orchestrated Kubernetes deployment.
 
 ## What Is It?
 
