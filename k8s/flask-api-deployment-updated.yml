@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-api-deployment
+  labels:
+    app: flask-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask-api
+  template:
+    metadata:
+      labels:
+        app: flask-api
+    spec:
+      containers:
+        - name: flask-api
+          image: flask-api:latest
+          imagePullPolicy: Never  #For local development
+          ports:
+            - containerPort: 5000
+          
+
+          #Environment variables from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: flask-api-config
+          
+          env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: flask-api-secret
+                  key: DATABASE_PASSWORD
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: flask-api-secret
+                  key: API_KEY
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: flask-api-secret
+                  key: JWT_SECRET
+
+          
+
+
+
+ 

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-api-config
+  labels:
+    app: flask-api
+data: 
+  #Application settings
+  API_VERSION: "v1.0"
+  ENVIRONMENT: "development"
+  LOG_LEVEL: "INFO"
+  MAX_CONNECTIONS: "100"
+  FEATURE_FLAG_NEW_UI: "true"

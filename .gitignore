@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+venv/
+.env
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Kubernetes secrets
+k8s/*-secret.yaml
+*-secret.yaml
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
