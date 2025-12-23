@@ -1,0 +1,2277 @@
+# KreptKon Project - 6-Day Completion Guide
+
+## Project Context
+**Project Name:** KreptKon
+**Current Status:** Days 1-11 completed 
+**Goal:** Add PostgreSQL database and deploy to AWS in 6 days
+**Time Commitment:** 5-6 hours per day
+
+---
+
+### What You Completed last 11 days
+# KreptKon - Docker & Kubernetes Learning Project
+
+Learning Docker and Kubernetes by building and deploying a Flask API. This project follows a 14-day roadmap to go from basic Flask to a fully orchestrated Kubernetes deployment.
+
+## What Is It?
+
+A simple Flask API that I've containerised with Docker and deployed to Kubernetes (using Minikube). The app runs across multiple pods with load balancing, and I've added ConfigMaps and Secrets for configuration management.
+
+**Stack:**
+- Python 3.11 + Flask
+- Docker
+- Kubernetes (Minikube)
+- ConfigMaps & Secrets
+
+---
+
+## Quick Start
+
+### Prerequisites
+- Python 3.11+
+- Docker Desktop or Minikube
+- kubectl CLI
+
+## Running Locally
+
+```bash
+git clone <your-repo-url>
+cd KreptKon/backend
+
+# Set up virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install and run
+pip3 install -r requirements.txt
+python3 app.py
+```
+
+Access at http://localhost:5000
+
+## Running with Docker
+
+```bash
+cd backend
+docker build -t flask-api:latest .
+docker run -p 5000:5000 flask-api:latest
+```
+
+## Running on Kubernetes
+
+```bash
+# Start Minikube
+minikube start
+
+# Build image in Minikube
+eval $(minikube docker-env)
+cd backend
+docker build -t flask-api:latest .
+
+# Deploy everything
+cd ..
+kubectl apply -f k8s/flask-configmap.yaml
+kubectl apply -f k8s/flask-secret.yaml
+kubectl apply -f k8s/flask-api-deployment-updated.yml
+kubectl apply -f k8s/flask-api-service.yml
+
+# Get the URL
+minikube service flask-api-service --url
+```
+
+## API Endpoints
+
+- `/hello` - Basic greeting with pod info
+- `/status` - API status and config
+- `/config` - Shows all configuration values
+- `/data` - Sample user data
+- `/user/<id>` - Get specific user
+
+## What I Did/Learned
+
+**Day 1-2: Project Setup**
+- Created Flask API with multiple endpoints
+- Set up Python virtual environment
+- Installed dependencies and created requirements.txt
+
+**Day 3-4: Dockerisation**
+- Wrote Dockerfile to containerise the Flask app
+- Built and ran Docker containers
+- Debugged containerised application
+- Learned Docker commands: `build`, `run`, `ps`, `exec`
+
+**Day 5: Version Control**
+- Initialised Git repository
+- Created GitHub repository and pushed code
+- Learned Git workflow: `init`, `add`, `commit`, `push`
+
+---
+
+
+
+**Day 6: Kubernetes Introduction**
+- Installed Minikube
+- Learned core concepts: Pods, Nodes, Clusters
+- Ran test pods to understand basic operations
+- Understood why Kubernetes is needed: scaling, self-healing, load balancing
+
+**Day 7: Deployments**
+- Created Kubernetes Deployment with 2 replicas
+- Learned about ReplicaSets and pod management
+- Understood labels and selectors
+- Experienced automatic pod recovery (self-healing)
+
+**Day 8: Services & Networking**
+- Created NodePort Service to expose the API
+- Understood Kubernetes networking and load balancing
+- Added pod identification to API responses (pod name and IP)
+- Verified traffic distribution across multiple pods
+- Learned about NAT in Kubernetes networking
+
+**Day 9: Scaling & Resilience**
+- Scaled deployment from 2 to 4 replicas
+- Deleted pods to test self-healing
+- Confirmed zero-downtime during pod failures
+
+![Scaling Demo](img/k8s_day9.png)
+
+---
+
+**Day 10: Documentation**
+Cleaned up the README and added screenshots.
+
+**Day 11: Configuration Management**
+This is where it got interesting. Instead of hardcoding values in the app, I:
+- Created a ConfigMap for things like API version, environment, log level
+- Created a Secret for sensitive stuff (database passwords, API keys)
+- Updated the Flask app to read from environment variables
+- Modified the Kubernetes deployment to inject these values
+
+The cool part: I can now change configuration values without rebuilding the Docker image. Just edit the ConfigMap, restart the pods, and the new values are loaded.
+
+**ConfigMap and Secret in Kubernetes:**
+
+![ConfigMap and Secret Resources](img/k8s_day11_resources.png)
+
+**All Pods Running with Config:**
+
+![Running Pods](img/k8s_day11_pods.png)
+
+**Configuration Endpoint Response:**
+
+![Config Endpoint](img/k8s_day11_config_endpoint.png)
+
+**Load Balancing Across Different Pods:**
+
+![Load Balancing](img/k8s_day11_loadbalancing.png)
+
+## ConfigMap Example
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-api-configmap
+data:
+  API_VERSION: "v1.0"
+  ENVIRONMENT: "development"
+  LOG_LEVEL: "INFO"
+```
+
+Update it live:
+```bash
+kubectl edit configmap flask-api-configmap
+# Change values
+kubectl rollout restart deployment flask-api-deployment
+```
+
+## Project Structure
+
+```
+KREPTKON/
+├── backend/
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── venv/
+├── k8s/
+│   ├── flask-api-deployment.yml
+│   ├── flask-api-service.yml
+│   ├── flask-configmap.yaml      
+│   └── flask-secret.yaml          
+├── img/
+│   └── k8s_day9.png
+├── docker-compose.yml
+└── README.md
+```
+
+## Troubleshooting Notes
+
+**Pods not starting?**
+```bash
+kubectl logs <pod-name>
+kubectl describe pod <pod-name>
+```
+
+**Image not found in Minikube?**
+Make sure you built it in Minikube's Docker daemon:
+```bash
+eval $(minikube docker-env)
+docker build -t flask-api:latest .
+```
+
+**Service not accessible?**
+```bash
+minikube service flask-api-service --url
+```
+
+## Useful Commands
+
+```bash
+# Check everything
+kubectl get all
+
+# Scale deployment
+kubectl scale deployment flask-api-deployment --replicas=5
+
+# View logs
+kubectl logs -l app=flask-api --tail=20
+
+# Restart pods
+kubectl rollout restart deployment flask-api-deployment
+
+# Access Minikube dashboard
+minikube dashboard
+```
+
+## Things I Found Tricky
+
+1. **Minikube image caching** - Had to make sure I was building in Minikube's Docker daemon, not my local one
+2. **ConfigMap indentation** - YAML is very picky about spaces
+3. **Port 5000 conflict on Mac** - Had to disable AirPlay Receiver
+4. **Understanding when pods pick up new config** - They don't automatically reload, need to restart them
+
+## Next Steps
+
+Planning to add:
+- Database integration (PostgreSQL)
+- Health checks
+- Maybe a simple frontend
+- Try deploying to a cloud provider
+
+## Notes
+
+The secret files (flask-secret.yaml) aren't committed to Git for security reasons. If you clone this repo, you'll need to create your own secrets:
+
+```bash
+kubectl create secret generic flask-api-secret \
+  --from-literal=DATABASE_PASSWORD=yourpassword \
+  --from-literal=API_KEY=yourapikey \
+  --from-literal=JWT_SECRET=yourjwtsecret
+```
+
+## DAY 1: PostgreSQL Integration - Local Setup
+
+### Today's Goal
+Integrate PostgreSQL database with your Flask app and test locally with Docker Compose
+
+### Morning Session (2.5-3 hours): Learning & Setup
+
+**1. Update Project Structure (15 min)**
+```bash
+cd KreptKon/backend
+touch models.py config.py
+```
+
+**2. Install Dependencies (15 min)**
+Update `requirements.txt`:
+```
+Flask==3.0.0
+flask-sqlalchemy==3.1.1
+psycopg2-binary==2.9.9
+flask-migrate==4.0.5
+python-dotenv==1.0.0
+```
+
+Install:
+```bash
+pip install -r requirements.txt
+```
+
+**3. Learn SQLAlchemy Basics (30 min)**
+- Read: SQLAlchemy ORM basics
+- Understand: Models, Sessions, Queries
+- Review: Flask-SQLAlchemy integration patterns
+
+**4. Create Database Configuration (30 min)**
+
+Create `config.py`:
+```python
+import os
+
+class Config:
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DATABASE_URL',
+        'postgresql://user:password@localhost:5432/kreptkon'
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+```
+
+**5. Create Database Models (45 min)**
+
+Create `models.py`:
+```python
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+db = SQLAlchemy()
+
+class User(db.Model):
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'created_at': self.created_at.isoformat()
+        }
+```
+
+### Afternoon Session (2.5-3 hours): Implementation
+
+**6. Update Flask App (60 min)**
+
+Modify `app.py`:
+```python
+from flask import Flask, jsonify, request
+from models import db, User
+from config import Config
+
+app = Flask(__name__)
+app.config.from_object(Config)
+db.init_app(app)
+
+# Existing endpoints
+@app.route('/hello')
+def hello():
+    return jsonify({'message': 'Hello from KreptKon!'})
+
+@app.route('/status')
+def status():
+    return jsonify({'status': 'running', 'database': 'connected'})
+
+# New CRUD endpoints
+@app.route('/users', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    return jsonify([user.to_dict() for user in users])
+
+@app.route('/users', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    new_user = User(
+        username=data['username'],
+        email=data['email']
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify(new_user.to_dict()), 201
+
+@app.route('/users/<int:id>', methods=['GET'])
+def get_user(id):
+    user = User.query.get_or_404(id)
+    return jsonify(user.to_dict())
+
+@app.route('/users/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    db.session.delete(user)
+    db.session.commit()
+    return '', 204
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(host='0.0.0.0', port=5000, debug=True)
+```
+
+**7. Create Docker Compose File (30 min)**
+
+Create `docker-compose.yml` in root:
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: kreptkon
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  flask-api:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/kreptkon
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+
+volumes:
+  postgres_data:
+```
+
+**8. Test Locally (60 min)**
+```bash
+# Start services
+docker-compose up --build
+
+# Test in another terminal
+curl http://localhost:5000/hello
+curl http://localhost:5000/users
+
+# Create a user
+curl -X POST http://localhost:5000/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com"}'
+
+# Get all users
+curl http://localhost:5000/users
+```
+
+### End of Day Checklist
+- [ ] Flask app connects to PostgreSQL
+- [ ] CRUD endpoints work locally
+- [ ] Docker Compose runs successfully
+- [ ] Can create and retrieve users via API
+
+### Commit Your Work
+```bash
+git add .
+git commit -m "Day 1: Added PostgreSQL integration with Docker Compose"
+git push
+```
+
+---
+
+## DAY 2: Kubernetes PostgreSQL + ConfigMap/Secrets
+
+### What You Completed Yesterday
+PostgreSQL integrated with Flask, working locally via Docker Compose
+
+### Today's Goal
+Deploy PostgreSQL in Kubernetes with persistent storage and connect Flask pods to it
+
+### Morning Session (2.5-3 hours): Learning & Configuration
+
+**1. Learn Kubernetes Storage Concepts (30 min)**
+- PersistentVolume (PV)
+- PersistentVolumeClaim (PVC)
+- ConfigMaps vs Secrets
+- StatefulSets vs Deployments for databases
+
+**2. Create Kubernetes Folder Structure (5 min)**
+```bash
+mkdir -p kubernetes
+cd kubernetes
+```
+
+**3. Create ConfigMap (15 min)**
+
+Create `configmap.yaml`:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-config
+data:
+  FLASK_ENV: "production"
+  DATABASE_HOST: "postgres-service"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "kreptkon"
+```
+
+**4. Create Secrets (15 min)**
+
+Create `secrets.yaml`:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secrets
+type: Opaque
+stringData:
+  POSTGRES_USER: user
+  POSTGRES_PASSWORD: password
+  DATABASE_URL: postgresql://user:password@postgres-service:5432/kreptkon
+```
+
+**5. Create PostgreSQL PersistentVolumeClaim (20 min)**
+
+Create `postgres-pvc.yaml`:
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+**6. Create PostgreSQL Deployment (45 min)**
+
+Create `postgres-deployment.yaml`:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: flask-config
+              key: DATABASE_NAME
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+```
+
+**7. Create PostgreSQL Service (20 min)**
+
+Create `postgres-service.yaml`:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: postgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+  type: ClusterIP
+```
+
+### Afternoon Session (2.5-3 hours): Deploy & Test
+
+**8. Update Flask Deployment (30 min)**
+
+Modify `flask-api-deployment.yaml`:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-api-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-api
+  template:
+    metadata:
+      labels:
+        app: flask-api
+    spec:
+      containers:
+      - name: flask-api
+        image: flask-api:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: DATABASE_URL
+        envFrom:
+        - configMapRef:
+            name: flask-config
+```
+
+**9. Deploy to Kubernetes (45 min)**
+```bash
+# Make sure you're using Minikube Docker daemon
+eval $(minikube docker-env)
+
+# Rebuild Flask image with new code
+cd ../backend
+docker build -t flask-api:latest .
+
+# Apply Kubernetes configs
+cd ../kubernetes
+kubectl apply -f configmap.yaml
+kubectl apply -f secrets.yaml
+kubectl apply -f postgres-pvc.yaml
+kubectl apply -f postgres-deployment.yaml
+kubectl apply -f postgres-service.yaml
+kubectl apply -f flask-api-deployment.yaml
+kubectl apply -f flask-api-service.yaml
+
+# Check everything is running
+kubectl get all
+kubectl get pvc
+```
+
+**10. Test Connection (45 min)**
+```bash
+# Get service URL
+minikube service flask-api-service --url
+
+# Test endpoints (use the URL from above)
+curl http://<minikube-url>/hello
+curl http://<minikube-url>/users
+
+# Create a user
+curl -X POST http://<minikube-url>/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"k8suser","email":"k8s@example.com"}'
+
+# Verify data persists
+kubectl delete pod -l app=flask-api
+# Wait for pods to restart
+kubectl get pods -w
+# Test again - data should still be there
+curl http://<minikube-url>/users
+```
+
+**11. Debug Issues (30 min)**
+```bash
+# Check pod logs
+kubectl logs -l app=flask-api
+kubectl logs -l app=postgres
+
+# Check pod details
+kubectl describe pod -l app=flask-api
+
+# Exec into Flask pod to test DB connection
+kubectl exec -it <flask-pod-name> -- sh
+# Inside pod:
+# python
+# from models import db
+# db.session.execute('SELECT 1')
+```
+
+### End of Day Checklist
+- [ ] PostgreSQL running in Kubernetes with persistent storage
+- [ ] Flask pods connect to PostgreSQL
+- [ ] ConfigMap and Secrets configured
+- [ ] CRUD operations work through Kubernetes service
+- [ ] Data persists after pod restarts
+
+### Commit Your Work
+```bash
+git add .
+git commit -m "Day 2: Kubernetes PostgreSQL with persistent storage"
+git push
+```
+
+---
+
+## DAY 3: AWS Setup + ECR
+
+### What You Completed Yesterday
+PostgreSQL and Flask running together in local Kubernetes with persistent storage
+
+### Today's Goal
+Set up AWS account, create ECR repository, and push Docker images to AWS
+
+### Morning Session (2.5-3 hours): AWS Account & Setup
+
+**1. Create AWS Account (30 min)**
+- Go to aws.amazon.com
+- Sign up for free tier account
+- Enter payment information (required but won't charge for free tier usage)
+- Verify email and phone number
+- Log into AWS Console
+
+**2. Install & Configure AWS CLI (30 min)**
+```bash
+# Install AWS CLI
+# macOS:
+brew install awscli
+
+# Linux:
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+# Windows (PowerShell as admin):
+msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi
+
+# Verify installation
+aws --version
+```
+
+**3. Create IAM User & Access Keys (45 min)**
+- AWS Console → IAM → Users → Add User
+- Username: `kreptkon-admin`
+- Enable: "Programmatic access"
+- Attach policies: `AdministratorAccess` (for simplicity; restrict in production)
+- Download CSV with Access Key ID and Secret Access Key
+- **SAVE THIS FILE SECURELY - YOU WON'T SEE IT AGAIN**
+
+Configure AWS CLI:
+```bash
+aws configure
+# Enter:
+# AWS Access Key ID: [from CSV]
+# AWS Secret Access Key: [from CSV]
+# Default region: us-east-1
+# Default output format: json
+
+# Test configuration
+aws sts get-caller-identity
+```
+
+**4. Learn ECR Basics (30 min)**
+- Read AWS ECR documentation
+- Understand: Repositories, image tags, authentication
+- Review: Pricing (free tier: 500MB storage, 500MB transfer/month)
+
+**5. Create ECR Repository (30 min)**
+```bash
+# Create repository
+aws ecr create-repository \
+  --repository-name kreptkon/flask-api \
+  --region us-east-1
+
+# Note the "repositoryUri" from output (you'll need this)
+# Format: <account-id>.dkr.ecr.us-east-1.amazonaws.com/kreptkon/flask-api
+
+# Set environment variable for easier use
+export ECR_URI=<your-repository-uri>
+echo $ECR_URI
+```
+
+### Afternoon Session (2.5-3 hours): Build & Push Images
+
+**6. Authenticate Docker to ECR (20 min)**
+```bash
+# Get login password and authenticate
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin \
+  <account-id>.dkr.ecr.us-east-1.amazonaws.com
+
+# You should see "Login Succeeded"
+```
+
+**7. Optimize Dockerfile (Optional but Recommended) (30 min)**
+
+Update `backend/Dockerfile`:
+```dockerfile
+# Multi-stage build for smaller image
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY --from=builder /root/.local /root/.local
+COPY . .
+
+# Add Python user packages to PATH
+ENV PATH=/root/.local/bin:$PATH
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
+```
+
+**8. Build and Tag Image (30 min)**
+```bash
+cd backend
+
+# Build image
+docker build -t flask-api:latest .
+
+# Tag for ECR (use your ECR URI)
+docker tag flask-api:latest $ECR_URI:latest
+docker tag flask-api:latest $ECR_URI:v1.0
+
+# Verify tags
+docker images | grep flask-api
+```
+
+**9. Push to ECR (30 min)**
+```bash
+# Push both tags
+docker push $ECR_URI:latest
+docker push $ECR_URI:v1.0
+
+# Verify in AWS Console
+# ECR → Repositories → kreptkon/flask-api
+# You should see both tags
+
+# Or via CLI:
+aws ecr describe-images \
+  --repository-name kreptkon/flask-api \
+  --region us-east-1
+```
+
+**10. Test Pulling Image (20 min)**
+```bash
+# Remove local image
+docker rmi flask-api:latest
+docker rmi $ECR_URI:latest
+
+# Pull from ECR
+docker pull $ECR_URI:latest
+
+# Test run
+docker run -p 5000:5000 $ECR_URI:latest
+# Ctrl+C to stop
+```
+
+**11. Document ECR URI (10 min)**
+
+Create `.env` file (DON'T commit this):
+```bash
+ECR_URI=<your-account-id>.dkr.ecr.us-east-1.amazonaws.com/kreptkon/flask-api
+AWS_REGION=us-east-1
+AWS_ACCOUNT_ID=<your-account-id>
+```
+
+Add to `.gitignore`:
+```
+.env
+```
+
+### End of Day Checklist
+- [ ] AWS account created and verified
+- [ ] AWS CLI installed and configured
+- [ ] IAM user with necessary permissions created
+- [ ] ECR repository created
+- [ ] Docker images successfully pushed to ECR
+- [ ] Can pull and run images from ECR
+
+### Commit Your Work
+```bash
+git add .
+git commit -m "Day 3: AWS setup and ECR configuration"
+git push
+```
+
+### Save Important Info
+Document these values (keep secure, don't commit):
+- AWS Account ID
+- ECR Repository URI
+- AWS Region
+
+---
+
+## DAY 4: EKS Cluster Setup
+
+### What You Completed Yesterday
+AWS account configured, Docker images pushed to ECR
+
+### Today's Goal
+Create EKS cluster and deploy PostgreSQL database on AWS RDS
+
+### Morning Session (2.5-3 hours): Install Tools & Create EKS
+
+**1. Install eksctl (30 min)**
+```bash
+# macOS:
+brew tap weaveworks/tap
+brew install weaveworks/tap/eksctl
+
+# Linux:
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+
+# Windows (PowerShell):
+choco install eksctl
+
+# Verify installation
+eksctl version
+```
+
+**2. Install/Update kubectl for AWS (15 min)**
+```bash
+# macOS:
+brew install kubectl
+
+# Linux:
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Verify
+kubectl version --client
+```
+
+**3. Create EKS Cluster Config (30 min)**
+
+Create `eks-cluster-config.yaml` in root:
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: kreptkon-cluster
+  region: us-east-1
+
+nodeGroups:
+  - name: ng-1
+    instanceType: t3.small
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 4
+    volumeSize: 20
+    ssh:
+      allow: false
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        appMesh: true
+        ebs: true
+        fsx: true
+        efs: true
+        albIngress: true
+        cloudWatch: true
+```
+
+**4. Create EKS Cluster (20 min + 15-20 min waiting)**
+```bash
+# Start cluster creation
+eksctl create cluster -f eks-cluster-config.yaml
+
+# This takes 15-20 minutes - get a coffee!
+# The command will show progress
+
+# Once complete, verify
+kubectl get nodes
+kubectl get svc
+```
+
+**5. Verify Cluster Access (15 min)**
+```bash
+# Check kubectl context
+kubectl config current-context
+# Should show: <username>@kreptkon-cluster.us-east-1.eksctl.io
+
+# Test cluster
+kubectl get nodes -o wide
+kubectl cluster-info
+
+# Check AWS Console
+# EKS → Clusters → kreptkon-cluster
+```
+
+### Afternoon Session (2.5-3 hours): RDS Setup
+
+**6. Learn RDS Basics (20 min)**
+- Read AWS RDS documentation
+- Understand: Security Groups, VPC, Subnets
+- Review: Free tier limits (750 hours/month db.t3.micro)
+
+**7. Get VPC Information (15 min)**
+```bash
+# Get VPC ID used by EKS
+aws eks describe-cluster \
+  --name kreptkon-cluster \
+  --region us-east-1 \
+  --query 'cluster.resourcesVpcConfig.vpcId' \
+  --output text
+
+# Save this VPC ID
+export EKS_VPC_ID=<vpc-id-from-above>
+
+# Get security group for EKS nodes
+aws eks describe-cluster \
+  --name kreptkon-cluster \
+  --region us-east-1 \
+  --query 'cluster.resourcesVpcConfig.clusterSecurityGroupId' \
+  --output text
+
+# Save this Security Group ID
+export EKS_SG_ID=<security-group-id-from-above>
+```
+
+**8. Create RDS Security Group (30 min)**
+```bash
+# Create security group for RDS
+aws ec2 create-security-group \
+  --group-name kreptkon-rds-sg \
+  --description "Security group for KreptKon RDS" \
+  --vpc-id $EKS_VPC_ID \
+  --region us-east-1
+
+# Save the GroupId from output
+export RDS_SG_ID=<group-id-from-output>
+
+# Allow PostgreSQL traffic from EKS security group
+aws ec2 authorize-security-group-ingress \
+  --group-id $RDS_SG_ID \
+  --protocol tcp \
+  --port 5432 \
+  --source-group $EKS_SG_ID \
+  --region us-east-1
+
+# Verify
+aws ec2 describe-security-groups \
+  --group-ids $RDS_SG_ID \
+  --region us-east-1
+```
+
+**9. Create DB Subnet Group (20 min)**
+```bash
+# Get subnet IDs from VPC
+aws ec2 describe-subnets \
+  --filters "Name=vpc-id,Values=$EKS_VPC_ID" \
+  --query 'Subnets[*].SubnetId' \
+  --output text \
+  --region us-east-1
+
+# Save at least 2 subnet IDs
+export SUBNET_1=<first-subnet-id>
+export SUBNET_2=<second-subnet-id>
+
+# Create DB subnet group
+aws rds create-db-subnet-group \
+  --db-subnet-group-name kreptkon-db-subnet \
+  --db-subnet-group-description "Subnet group for KreptKon RDS" \
+  --subnet-ids $SUBNET_1 $SUBNET_2 \
+  --region us-east-1
+```
+
+**10. Create RDS PostgreSQL Instance (30 min + 10-15 min waiting)**
+```bash
+# Create RDS instance
+aws rds create-db-instance \
+  --db-instance-identifier kreptkon-postgres \
+  --db-instance-class db.t3.micro \
+  --engine postgres \
+  --engine-version 15.4 \
+  --master-username dbadmin \
+  --master-user-password 'YourSecurePassword123!' \
+  --allocated-storage 20 \
+  --vpc-security-group-ids $RDS_SG_ID \
+  --db-subnet-group-name kreptkon-db-subnet \
+  --backup-retention-period 7 \
+  --no-publicly-accessible \
+  --region us-east-1
+
+# Check status (will take 10-15 minutes)
+aws rds describe-db-instances \
+  --db-instance-identifier kreptkon-postgres \
+  --region us-east-1 \
+  --query 'DBInstances[0].DBInstanceStatus'
+
+# Wait until status is "available"
+aws rds wait db-instance-available \
+  --db-instance-identifier kreptkon-postgres \
+  --region us-east-1
+```
+
+**11. Get RDS Endpoint (15 min)**
+```bash
+# Get endpoint
+aws rds describe-db-instances \
+  --db-instance-identifier kreptkon-postgres \
+  --region us-east-1 \
+  --query 'DBInstances[0].Endpoint.Address' \
+  --output text
+
+# Save this endpoint
+export RDS_ENDPOINT=<endpoint-from-above>
+
+# Full connection string format:
+# postgresql://dbadmin:YourSecurePassword123!@<RDS_ENDPOINT>:5432/postgres
+```
+
+**12. Test RDS Connection (20 min)**
+```bash
+# Deploy a test pod with psql client
+kubectl run postgres-client --rm -it --restart=Never \
+  --image=postgres:15-alpine -- \
+  psql postgresql://dbadmin:YourSecurePassword123!@$RDS_ENDPOINT:5432/postgres
+
+# Inside the pod, run:
+# \l  (list databases)
+# \q  (quit)
+
+# If connection successful, create kreptkon database
+kubectl run postgres-client --rm -it --restart=Never \
+  --image=postgres:15-alpine -- \
+  psql postgresql://dbadmin:YourSecurePassword123!@$RDS_ENDPOINT:5432/postgres \
+  -c "CREATE DATABASE kreptkon;"
+```
+
+### End of Day Checklist
+- [ ] eksctl and kubectl installed
+- [ ] EKS cluster created and running (2 nodes)
+- [ ] kubectl configured to access EKS
+- [ ] RDS PostgreSQL instance created and available
+- [ ] Security groups configured for EKS → RDS communication
+- [ ] Successfully connected to RDS from test pod
+- [ ] kreptkon database created in RDS
+
+### Save Important Values
+Update your `.env` file:
+```bash
+EKS_CLUSTER_NAME=kreptkon-cluster
+RDS_ENDPOINT=<your-rds-endpoint>
+RDS_USERNAME=dbadmin
+RDS_PASSWORD=YourSecurePassword123!
+RDS_DATABASE=kreptkon
+```
+
+### Commit Your Work
+```bash
+git add eks-cluster-config.yaml
+git commit -m "Day 4: EKS cluster and RDS setup"
+git push
+```
+
+---
+
+## DAY 5: Deploy to EKS
+
+### What You Completed Yesterday
+EKS cluster running with 2 nodes, RDS PostgreSQL instance created and accessible
+
+### Today's Goal
+Deploy Flask application to EKS, connect to RDS, and expose via LoadBalancer
+
+### Morning Session (2.5-3 hours): Update Configs & Deploy
+
+**1. Update Kubernetes Secrets for RDS (30 min)**
+
+Create `kubernetes/secrets-aws.yaml`:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secrets
+type: Opaque
+stringData:
+  POSTGRES_USER: dbadmin
+  POSTGRES_PASSWORD: YourSecurePassword123!
+  DATABASE_URL: postgresql://dbadmin:YourSecurePassword123!@<YOUR-RDS-ENDPOINT>:5432/kreptkon
+```
+
+**Replace `<YOUR-RDS-ENDPOINT>` with your actual RDS endpoint from Day 4**
+
+**2. Update ConfigMap (15 min)**
+
+Create `kubernetes/configmap-aws.yaml`:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-config
+data:
+  FLASK_ENV: "production"
+  DATABASE_HOST: "<YOUR-RDS-ENDPOINT>"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "kreptkon"
+```
+
+**3. Update Flask Deployment for ECR (30 min)**
+
+Create `kubernetes/flask-api-deployment-aws.yaml`:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-api-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-api
+  template:
+    metadata:
+      labels:
+        app: flask-api
+    spec:
+      containers:
+      - name: flask-api
+        image: <YOUR-ECR-URI>:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: DATABASE_URL
+        envFrom:
+        - configMapRef:
+            name: flask-config
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /hello
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+```
+
+**Replace `<YOUR-ECR-URI>` with your ECR repository URI from Day 3**
+
+**4. Update Service for LoadBalancer (20 min)**
+
+Create `kubernetes/flask-api-service-aws.yaml`:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-api-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: flask-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+```
+
+**5. Deploy to EKS (45 min)**
+```bash
+# Verify you're on EKS context
+kubectl config current-context
+# Should show EKS cluster
+
+# Apply configs
+kubectl apply -f kubernetes/secrets-aws.yaml
+kubectl apply -f kubernetes/configmap-aws.yaml
+kubectl apply -f kubernetes/flask-api-deployment-aws.yaml
+kubectl apply -f kubernetes/flask-api-service-aws.yaml
+
+# Watch deployment
+kubectl get pods -w
+# Wait until all pods show "Running" and "2/2 READY"
+# Press Ctrl+C when done
+
+# Check deployment status
+kubectl get deployments
+kubectl get pods
+kubectl get svc
+```
+
+**6. Debug Connection Issues (30 min)**
+```bash
+# Check pod logs
+kubectl logs -l app=flask-api
+
+# If you see database connection errors:
+# Check pod details
+kubectl describe pod -l app=flask-api
+
+# Test database connection from pod
+kubectl exec -it <flask-pod-name> -- sh
+# Inside pod:
+apk add postgresql-client  # if needed
+psql $DATABASE_URL -c "SELECT 1"
+exit
+
+# Check secrets are loaded correctly
+kubectl get secret postgres-secrets -o yaml
+```
+
+### Afternoon Session (2.5-3 hours): Test & Configure
+
+**7. Get LoadBalancer URL (15 min)**
+```bash
+# Get LoadBalancer external IP/hostname
+kubectl get svc flask-api-service
+
+# Wait for EXTERNAL-IP to show (not <pending>)
+# This can take 3-5 minutes
+
+# Save the external URL
+export LB_URL=$(kubectl get svc flask-api-service \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+echo "LoadBalancer URL: http://$LB_URL"
+```
+
+**8. Test API Endpoints (45 min)**
+```bash
+# Test basic endpoint
+curl http://$LB_URL/hello
+
+# Test status endpoint
+curl http://$LB_URL/status
+
+# Test database - get all users (should be empty initially)
+curl http://$LB_URL/users
+
+# Create a user
+curl -X POST http://$LB_URL/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"awsuser","email":"aws@example.com"}'
+
+# Get all users (should see the one you just created)
+curl http://$LB_URL/users
+
+# Create more test users
+curl -X POST http://$LB_URL/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser2","email":"test2@example.com"}'
+
+curl -X POST http://$LB_URL/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser3","email":"test3@example.com"}'
+
+# Get specific user
+curl http://$LB_URL/users/1
+
+# Delete a user
+curl -X DELETE http://$LB_URL/users/2
+
+# Verify deletion
+curl http://$LB_URL/users
+```
+
+**9. Test Scaling (30 min)**
+```bash
+# Scale up to 4 replicas
+kubectl scale deployment flask-api-deployment --replicas=4
+
+# Watch pods come up
+kubectl get pods -w
+
+# Verify all 4 pods are running
+kubectl get pods -l app=flask-api
+
+# Test that requests are load balanced
+for i in {1..10}; do
+  curl http://$LB_URL/status
+  sleep 1
+done
+
+# Check which pods handled requests (check logs)
+kubectl logs -l app=flask-api --tail=20
+
+# Scale back down
+kubectl scale deployment flask-api-deployment --replicas=2
+```
+
+**10. Test Resilience (30 min)**
+```bash
+# Delete one pod
+kubectl get pods -l app=flask-api
+kubectl delete pod <one-pod-name>
+
+# Watch Kubernetes automatically restart it
+kubectl get pods -w
+
+# Test API still works during restart
+curl http://$LB_URL/users
+
+# Verify data persists (should still see your test users)
+curl http://$LB_URL/users
+```
+
+### End of Day Checklist
+- [ ] Flask app deployed to EKS
+- [ ] Pods successfully connect to RDS PostgreSQL
+- [ ] LoadBalancer created and accessible
+- [ ] All CRUD endpoints work via public URL
+- [ ] Scaling works (2→4→2 replicas)
+- [ ] Auto-recovery tested (pod deletion/restart)
+- [ ] Data persists in RDS across pod restarts
+
+### Important Values to Save
+```bash
+# Add to .env file
+LOADBALANCER_URL=<your-lb-url>
+```
+
+### Commit Your Work
+```bash
+git add kubernetes/
+git commit -m "Day 5: Deployed to EKS with RDS integration"
+git push
+```
+
+### Optional: Set Up Custom Domain (If Time Permits)
+If you finish early and want to add a custom domain:
+```bash
+# This is optional and can be done on Day 6
+# Requires: Route 53 domain (~$12/year)
+```
+
+---
+
+## DAY 6: Monitoring, Documentation & Final Polish
+
+### What You Completed Yesterday
+Flask app successfully deployed to EKS, connected to RDS, accessible via LoadBalancer
+
+### Today's Goal
+Add monitoring, create comprehensive documentation, take screenshots, and finalize portfolio project
+
+### Morning Session (2.5-3 hours): Monitoring & Logging
+
+**1. Set Up CloudWatch Container Insights (45 min)**
+```bash
+# Install CloudWatch agent for EKS
+kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml
+
+# Verify deployment
+kubectl get pods -n amazon-cloudwatch
+
+# Wait for pods to be running
+kubectl get pods -n amazon-cloudwatch -w
+```
+
+**2. Add Application Logging to Flask (45 min)**
+
+Update `backend/app.py`:
+```python
+from flask import Flask, jsonify, request
+from models import db, User
+from config import Config
+import logging
+import sys
+
+app = Flask(__name__)
+app.config.from_object(Config)
+db.init_app(app)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+@app.route('/hello')
+def hello():
+    logger.info("Hello endpoint accessed")
+    return jsonify({'message': 'Hello from KreptKon!'})
+
+@app.route('/status')
+def status():
+    logger.info("Status endpoint accessed")
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        db_status = 'connected'
+    except Exception as e:
+        logger.error(f"Database connection failed: {str(e)}")
+        db_status = 'disconnected'
+    return jsonify({
+        'status': 'running',
+        'database': db_status
+    })
+
+@app.route('/users', methods=['GET'])
+def get_users():
+    logger.info("GET /users - Fetching all users")
+    users = User.query.all()
+    logger.info(f"Found {len(users)} users")
+    return jsonify([user.to_dict() for user in users])
+
+@app.route('/users', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    logger.info(f"POST /users - Creating user: {data.get('username')}")
+    try:
+        new_user = User(
+            username=data['username'],
+            email=data['email']
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        logger.info(f"User created successfully: {new_user.id}")
+        return jsonify(new_user.to_dict()), 201
+    except Exception as e:
+        logger.error(f"Error creating user: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/users/<int:id>', methods=['GET'])
+def get_user(id):
+    logger.info(f"GET /users/{id}")
+    user = User.query.get_or_404(id)
+    return jsonify(user.to_dict())
+
+@app.route('/users/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    logger.info(f"DELETE /users/{id}")
+    try:
+        user = User.query.get_or_404(id)
+        db.session.delete(user)
+        db.session.commit()
+        logger.info(f"User {id} deleted successfully")
+        return '', 204
+    except Exception as e:
+        logger.error(f"Error deleting user: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
+
+@app.errorhandler(404)
+def not_found(error):
+    logger.warning(f"404 error: {request.url}")
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"500 error: {str(error)}")
+    return jsonify({'error': 'Internal server error'}), 500
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        logger.info("Database tables created")
+    logger.info("Starting Flask application")
+    app.run(host='0.0.0.0', port=5000, debug=True)
+```
+
+**3. Rebuild and Push Updated Image (30 min)**
+```bash
+cd backend
+
+# Rebuild image
+docker build -t flask-api:latest .
+
+# Tag for ECR
+docker tag flask-api:latest $ECR_URI:v2.0
+docker tag flask-api:latest $ECR_URI:latest
+
+# Push to ECR
+docker push $ECR_URI:v2.0
+docker push $ECR_URI:latest
+
+# Update deployment on EKS
+kubectl rollout restart deployment flask-api-deployment
+
+# Wait for rollout to complete
+kubectl rollout status deployment flask-api-deployment
+
+# Verify new pods are running
+kubectl get pods -l app=flask-api
+```
+
+**4. View Logs in CloudWatch (30 min)**
+```bash
+# View logs locally first
+kubectl logs -l app=flask-api --tail=50 -f
+
+# Make some test requests to generate logs
+curl http://$LB_URL/users
+curl http://$LB_URL/status
+
+# Then check AWS Console:
+# CloudWatch → Log groups → /aws/containerinsights/kreptkon-cluster/application
+# You should see your application logs
+```
+
+### Afternoon Session (2.5-3 hours): Documentation & Screenshots
+
+**5. Take Screenshots (45 min)**
+
+Take screenshots of the following (save to `screenshots/` folder):
+```bash
+mkdir screenshots
+```
+
+**Screenshot Checklist:**
+- [ ] AWS EKS Console showing cluster overview
+- [ ] EKS showing 2 worker nodes
+- [ ] RDS Console showing database instance
+- [ ] ECR Console showing Docker images
+- [ ] Terminal showing `kubectl get all`
+- [ ] Terminal showing `kubectl get pods -o wide`
+- [ ] LoadBalancer service details (`kubectl describe svc flask-api-service`)
+- [ ] Browser showing API response from LoadBalancer URL
+- [ ] Postman/curl testing CRUD operations
+- [ ] CloudWatch logs showing application logs
+- [ ] Terminal showing scaling operation
+- [ ] Architecture diagram (create with draw.io or similar)
+
+**6. Create Architecture Diagram (45 min)**
+
+Create `architecture.png` showing:
+```
+┌─────────────────────────────────────────────────┐
+│                   Internet                       │
+└────────────────────┬────────────────────────────┘
+                     │
+                     ▼
+            ┌─────────────────┐
+            │  AWS Load       │
+            │  Balancer (ELB) │
+            └────────┬────────┘
+                     │
+                     ▼
+        ┌────────────────────────┐
+        │   Kubernetes Service   │
+        │   (ClusterIP/LB)       │
+        └────────┬───────────────┘
+                 │
+        ┌────────┴────────┐
+        │                 │
+        ▼                 ▼
+   ┌─────────┐      ┌─────────┐
+   │ Flask   │      │ Flask   │
+   │ Pod 1   │ .... │ Pod N   │
+   └────┬────┘      └────┬────┘
+        │                │
+        └────────┬───────┘
+                 │
+                 ▼
+        ┌─────────────────┐
+        │   AWS RDS       │
+        │   PostgreSQL    │
+        └─────────────────┘
+```
+
+Use tools like:
+- draw.io (diagrams.net)
+- Lucidchart
+- Excalidraw
+- Or hand-draw and photograph
+
+**7. Write Comprehensive README (90 min)**
+
+Update `README.md`:
+```markdown
+# KreptKon - Cloud-Native Microservice
+
+A production-ready Flask REST API with PostgreSQL database, containerized with Docker, orchestrated with Kubernetes, and deployed to AWS.
+
+![Architecture](architecture.png)
+
+## 🚀 Overview
+
+KreptKon is a microservice application demonstrating modern DevOps practices including:
+- RESTful API development with Flask
+- Containerization with Docker
+- Container orchestration with Kubernetes
+- Cloud deployment on AWS (EKS + RDS)
+- Infrastructure-as-Code
+- Auto-scaling and self-healing infrastructure
+- Production monitoring and logging
+
+## 🛠️ Tech Stack
+
+- **Backend**: Python 3.11, Flask, SQLAlchemy
+- **Database**: PostgreSQL 15
+- **Containerization**: Docker, Docker Compose
+- **Orchestration**: Kubernetes (Minikube → EKS)
+- **Cloud**: AWS (EKS, RDS, ECR, CloudWatch, ELB)
+- **DevOps**: kubectl, eksctl, AWS CLI
+
+## 📐 Architecture
+
+### Local Development
+- Flask API + PostgreSQL running in Docker Compose
+- Hot-reload for development
+
+### Production (AWS)
+- **EKS Cluster**: 2-4 worker nodes (t3.small)
+- **Flask Pods**: 2-10 replicas with auto-scaling
+- **RDS PostgreSQL**: Managed database (db.t3.micro)
+- **Load Balancer**: AWS ELB (automatically provisioned)
+- **Monitoring**: CloudWatch Container Insights
+
+### Key Features
+- ✅ Horizontal pod autoscaling
+- ✅ Self-healing (automatic pod restart)
+- ✅ Rolling updates (zero-downtime deployment)
+- ✅ Persistent data storage (RDS)
+- ✅ Centralized logging (CloudWatch)
+- ✅ Health checks and readiness probes
+
+## 📋 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/hello` | Health check |
+| GET | `/status` | Application and DB status |
+| GET | `/users` | Get all users |
+| POST | `/users` | Create new user |
+| GET | `/users/<id>` | Get user by ID |
+| DELETE | `/users/<id>` | Delete user |
+
+### Example Requests
+
+```bash
+# Health check
+curl http://<your-lb-url>/hello
+
+# Create user
+curl -X POST http://<your-lb-url>/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"johndoe","email":"john@example.com"}'
+
+# Get all users
+curl http://<your-lb-url>/users
+
+# Get specific user
+curl http://<your-lb-url>/users/1
+
+# Delete user
+curl -X DELETE http://<your-lb-url>/users/1
+```
+
+## 🏃 Running Locally
+
+### Prerequisites
+- Python 3.11+
+- Docker & Docker Compose
+- Git
+
+### Setup
+
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/KreptKon.git
+cd KreptKon
+```
+
+2. Run with Docker Compose
+```bash
+docker-compose up --build
+```
+
+3. Test the API
+```bash
+curl http://localhost:5000/hello
+curl http://localhost:5000/users
+```
+
+## ☸️ Running on Kubernetes (Minikube)
+
+### Prerequisites
+- Minikube
+- kubectl
+
+### Setup
+
+1. Start Minikube
+```bash
+minikube start
+```
+
+2. Build image in Minikube
+```bash
+eval $(minikube docker-env)
+cd backend
+docker build -t flask-api:latest .
+```
+
+3. Deploy
+```bash
+cd ../kubernetes
+kubectl apply -f configmap.yaml
+kubectl apply -f secrets.yaml
+kubectl apply -f postgres-pvc.yaml
+kubectl apply -f postgres-deployment.yaml
+kubectl apply -f postgres-service.yaml
+kubectl apply -f flask-api-deployment.yaml
+kubectl apply -f flask-api-service.yaml
+```
+
+4. Access the service
+```bash
+minikube service flask-api-service
+```
+
+## ☁️ Deploying to AWS
+
+### Prerequisites
+- AWS Account
+- AWS CLI configured
+- eksctl installed
+- kubectl installed
+
+### Setup
+
+1. Create ECR repository
+```bash
+aws ecr create-repository --repository-name kreptkon/flask-api --region us-east-1
+```
+
+2. Build and push image
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
+
+docker build -t flask-api:latest backend/
+docker tag flask-api:latest <ecr-uri>:latest
+docker push <ecr-uri>:latest
+```
+
+3. Create EKS cluster
+```bash
+eksctl create cluster -f eks-cluster-config.yaml
+```
+
+4. Create RDS instance
+```bash
+# Follow Day 4 instructions in the deployment guide
+# Or use AWS Console to create db.t3.micro PostgreSQL instance
+```
+
+5. Deploy to EKS
+```bash
+# Update secrets-aws.yaml and flask-api-deployment-aws.yaml with your values
+kubectl apply -f kubernetes/secrets-aws.yaml
+kubectl apply -f kubernetes/configmap-aws.yaml
+kubectl apply -f kubernetes/flask-api-deployment-aws.yaml
+kubectl apply -f kubernetes/flask-api-service-aws.yaml
+```
+
+6. Get LoadBalancer URL
+```bash
+kubectl get svc flask-api-service
+```
+
+## 📊 Monitoring
+
+### View Logs
+```bash
+# Kubernetes logs
+kubectl logs -l app=flask-api -f
+
+# CloudWatch (after setup)
+# AWS Console → CloudWatch → Log groups → /aws/containerinsights/kreptkon-cluster/application
+```
+
+### Scale Application
+```bash
+# Manual scaling
+kubectl scale deployment flask-api-deployment --replicas=4
+
+# Watch pods
+kubectl get pods -w
+```
+
+### Test Resilience
+```bash
+# Delete a pod (Kubernetes will auto-restart)
+kubectl delete pod <pod-name>
+
+# Verify recovery
+kubectl get pods
+```
+
+## 💰 Cost Breakdown (AWS)
+
+| Service | Type | Monthly Cost |
+|---------|------|--------------|
+| EKS Control Plane | - | $73 |
+| EC2 Nodes | 2x t3.small | $30 (free tier: 12 months) |
+| RDS PostgreSQL | db.t3.micro | $15 (free tier: 12 months) |
+| Load Balancer | Classic ELB | $18 |
+| ECR Storage | <500MB | $0.50 |
+| **Total** | | **~$75-100/month** |
+
+### Cost Optimization
+- Use spot instances for worker nodes
+- Delete resources when not in use: `eksctl delete cluster --name kreptkon-cluster`
+- Monitor with AWS Cost Explorer
+
+## 📸 Screenshots
+
+See `screenshots/` folder for:
+- EKS cluster overview
+- Running pods
+- LoadBalancer service
+- API responses
+- CloudWatch logs
+
+## 🧪 Testing
+
+```bash
+# Run local tests
+cd backend
+python -m pytest
+
+# Load testing (optional)
+# Install: pip install locust
+locust -f tests/load_test.py --host=http://<your-lb-url>
+```
+
+## 🗑️ Cleanup (AWS)
+
+**IMPORTANT**: Delete resources to avoid charges
+
+```bash
+# Delete Kubernetes resources
+kubectl delete -f kubernetes/
+
+# Delete EKS cluster
+eksctl delete cluster --name kreptkon-cluster --region us-east-1
+
+# Delete RDS instance
+aws rds delete-db-instance \
+  --db-instance-identifier kreptkon-postgres \
+  --skip-final-snapshot \
+  --region us-east-1
+
+# Delete ECR repository
+aws ecr delete-repository \
+  --repository-name kreptkon/flask-api \
+  --force \
+  --region us-east-1
+```
+
+## 🎯 Learning Outcomes
+
+This project demonstrates:
+- RESTful API design and implementation
+- Database integration with ORMs
+- Docker containerization best practices
+- Kubernetes orchestration concepts
+- Cloud infrastructure management (AWS)
+- DevOps workflows
+- Production deployment strategies
+- Monitoring and logging
+- Infrastructure-as-Code
+
+## 🔮 Future Enhancements
+
+- [ ] CI/CD pipeline with GitHub Actions
+- [ ] JWT authentication
+- [ ] React frontend
+- [ ] Redis caching layer
+- [ ] Prometheus + Grafana monitoring
+- [ ] Terraform for Infrastructure-as-Code
+- [ ] Multi-region deployment
+- [ ] Service mesh (Istio)
+
+## 📝 License
+
+MIT License - see LICENSE file
+
+## 👤 Author
+
+[Your Name]
+- GitHub: [@yourusername](https://github.com/yourusername)
+- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
+- Portfolio: [yourwebsite.com](https://yourwebsite.com)
+
+## 🙏 Acknowledgments
+
+Built as part of a 6-day intensive DevOps learning project.
+
+---
+
+**⭐ If you found this helpful, please star the repository!**
+```
+
+**8. Create Additional Documentation Files (30 min)**
+
+Create `DEPLOYMENT.md`:
+```markdown
+# Deployment Guide
+
+Detailed step-by-step instructions for deploying KreptKon to AWS.
+
+## Table of Contents
+1. Prerequisites
+2. AWS Account Setup
+3. ECR Setup
+4. EKS Cluster Creation
+5. RDS Database Setup
+6. Application Deployment
+7. Verification
+8. Troubleshooting
+
+[Include detailed instructions from Days 3-5]
+```
+
+Create `TROUBLESHOOTING.md`:
+```markdown
+# Troubleshooting Guide
+
+## Common Issues
+
+### Pods Not Starting
+**Symptom**: Pods stuck in `Pending` or `CrashLoopBackOff`
+
+**Solutions**:
+- Check logs: `kubectl logs <pod-name>`
+- Check events: `kubectl describe pod <pod-name>`
+- Verify image exists in ECR
+- Check resource limits
+
+### Database Connection Failed
+**Symptom**: Flask app can't connect to RDS
+
+**Solutions**:
+- Verify security groups allow traffic
+- Check RDS endpoint in secrets
+- Test connection from pod: `kubectl exec -it <pod> -- sh`
+- Verify RDS is in same VPC as EKS
+
+[Add more common issues and solutions]
+```
+
+**9. Update .gitignore (5 min)**
+```bash
+# Add to .gitignore
+.env
+*.pyc
+__pycache__/
+.DS_Store
+*.swp
+.vscode/
+.idea/
+venv/
+env/
+```
+
+**10. Final Testing (20 min)**
+```bash
+# Run through complete workflow
+# 1. Create user
+curl -X POST http://$LB_URL/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"finaltest","email":"final@test.com"}'
+
+# 2. Get all users
+curl http://$LB_URL/users
+
+# 3. Scale up
+kubectl scale deployment flask-api-deployment --replicas=3
+
+# 4. Delete a pod
+kubectl delete pod <one-pod-name>
+
+# 5. Verify data still exists
+curl http://$LB_URL/users
+
+# 6. Scale back down
+kubectl scale deployment flask-api-deployment --replicas=2
+
+# Take final screenshots of everything working
+```
+
+### Final Session (30 min): Git & Cleanup
+
+**11. Final Git Commit (15 min)**
+```bash
+git add .
+git commit -m "Day 6: Added monitoring, comprehensive documentation, and screenshots"
+git push
+```
+
+**12. Create GitHub Repository Description (5 min)**
+
+Update GitHub repository with:
+- **Description**: "Production-ready Flask microservice with PostgreSQL, containerized with Docker, orchestrated with Kubernetes, and deployed to AWS EKS"
+- **Topics**: python, flask, docker, kubernetes, aws, eks, rds, devops, microservices, postgresql, cloud-native
+- **Website**: Your LoadBalancer URL (if you want it public)
+
+**13. Create Release/Tag (10 min)**
+```bash
+git tag -a v1.0 -m "Version 1.0 - Production deployment on AWS"
+git push origin v1.0
+```
+
+## 🎉 End of Day 6 Checklist
+
+### Monitoring & Logging
+- [ ] CloudWatch Container Insights installed
+- [ ] Application logging implemented
+- [ ] Logs visible in CloudWatch
+- [ ] Can view real-time logs via kubectl
+
+### Documentation
+- [ ] Comprehensive README.md complete
+- [ ] Architecture diagram created
+- [ ] DEPLOYMENT.md with detailed instructions
+- [ ] TROUBLESHOOTING.md for common issues
+- [ ] API documentation clear and accurate
+
+### Screenshots
+- [ ] All required screenshots captured and saved
+- [ ] Screenshots show working application
+- [ ] Terminal output screenshots included
+- [ ] AWS Console screenshots captured
+
+### Testing
+- [ ] End-to-end workflow tested
+- [ ] All CRUD operations verified
+- [ ] Scaling tested and documented
+- [ ] Resilience demonstrated
+- [ ] LoadBalancer accessible and working
+
+### Code Quality
+- [ ] Code properly commented
+- [ ] No hardcoded secrets in repository
+- [ ] .gitignore updated
+- [ ] Requirements.txt up to date
+
+### Git Repository
+- [ ] All code committed and pushed
+- [ ] Repository description updated
+- [ ] Topics/tags added
+- [ ] Release v1.0 tagged
+- [ ] README looks professional on GitHub
+
+### Optional Cleanup (DO THIS AFTER SCREENSHOTS)
+```bash
+# If you're done and want to avoid AWS charges:
+# 1. Delete EKS cluster
+eksctl delete cluster --name kreptkon-cluster --region us-east-1
+
+# 2. Delete RDS (wait for EKS deletion to complete first)
+aws rds delete-db-instance \
+  --db-instance-identifier kreptkon-postgres \
+  --skip-final-snapshot \
+  --region us-east-1
+
+# 3. Verify all resources deleted
+aws eks list-clusters --region us-east-1
+aws rds describe-db-instances --region us-east-1
+
+# Note: Keep ECR images if you want to redeploy later
+# Deleting costs ~$0.10/month for storage
+```
+
+---
+
+## 🏆 PROJECT COMPLETE!
+
+### What You've Accomplished
+
+**Technical Skills Demonstrated:**
+- ✅ Backend API development (Python/Flask)
+- ✅ Database integration (PostgreSQL/SQLAlchemy)
+- ✅ Containerization (Docker)
+- ✅ Container orchestration (Kubernetes)
+- ✅ Cloud deployment (AWS EKS, RDS, ECR)
+- ✅ Infrastructure management
+- ✅ Monitoring and logging
+- ✅ DevOps best practices
+
+**Portfolio-Ready Project:**
+- ✅ Production deployment on AWS
+- ✅ Professional documentation
+- ✅ Working demo with screenshots
+- ✅ Scalable and resilient architecture
+- ✅ Clean, documented code
+- ✅ GitHub repository ready to share
+
+### Next Steps
+
+1. **Create LinkedIn Post** (use the template from earlier)
+2. **Add to Resume/Portfolio**
+   - Link to GitHub repository
+   - Mention AWS deployment
+   - Highlight technologies used
+3. **Practice Explaining the Project**
+   - Be ready to discuss architecture decisions
+   - Explain trade-offs (managed vs self-hosted)
+   - Talk about challenges overcome
+4. **Consider Enhancements** (for continued learning)
+   - Add CI/CD pipeline
+   - Implement authentication
+   - Create frontend
+   - Add caching layer
+
+### Interview Talking Points
+
+**"Tell me about this project":**
+- "Built a production-ready microservice from scratch"
+- "Deployed to AWS with auto-scaling and self-healing"
+- "Handled database, containerization, and orchestration"
+- "Achieved zero-downtime deployments with Kubernetes"
+
+**Technical Depth:**
+- Discuss EKS vs self-managed Kubernetes trade-offs
+- Explain RDS vs self-hosted PostgreSQL decision
+- Talk about security groups and network isolation
+- Describe scaling strategy and resource limits
+
+**Challenges Overcome:**
+- Database connectivity in Kubernetes
+- AWS IAM permissions
+- Docker image optimization
+- Cost management
+
+---
+
+## 📊 Final Project Stats
+
+- **Total Duration**: 6 days (30-36 hours)
+- **Technologies Used**: 15+
+- **AWS Services**: 7 (EKS, RDS, ECR, CloudWatch, ELB, EC2, IAM)
+- **Lines of Code**: ~1000+ (including configs)
+- **Git Commits**: 20-30
+- **Deployments**: Local → Minikube → AWS EKS
+
+---
+
+**Congratulations! You've built a production-ready, cloud-native microservice that demonstrates enterprise-level DevOps skills. This project shows you can take an application from development to production deployment on AWS.** 🚀
+
+**Time to update that LinkedIn profile and start applying for DevOps/Cloud Engineer roles!** 💼

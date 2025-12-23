@@ -1,0 +1,22 @@
+KREPTKON/
+├── backend/
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   ├── .dockerignore        
+│   └── venv/                  
+├── k8s/
+│   ├── flask-api-deployment.yml
+│   ├── flask-api-service.yml
+│   ├── flask-configmap.yaml   
+│   └── flask-secret.yaml     
+├── img/
+│   ├── k8s_day11_config_endpoint.png
+│   ├── k8s_day11_loadbalancing.png
+│   ├── k8s_day11_pods.png 
+│   └── k8s_day11_resources.png 
+│   └── k8s_day9.png
+├── .gitignore                 
+├── docker-compose.yml
+├── README.md
+└── requirements.txt      

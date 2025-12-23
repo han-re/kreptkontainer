@@ -1,1 +1,13 @@
+# flask-sqlalchemy → ORM (Python ↔ SQL)
+
+# psycopg2-binary → PostgreSQL driver
+
+# flask-migrate → schema changes later (migrations)
+
+# python-dotenv → env vars locally (very important later)
+
 flask
+flask-sqlalchemy
+psycopg2-binary
+flask-migrate
+python-dotenv

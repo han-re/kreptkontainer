@@ -1,10 +1,15 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from models import db, User
+from config import Config
 import os
 import socket
 
 app = Flask(__name__)
 #creating instance of flask application
 #Python built in that represents the name of the current module
+app.config.from_object(Config) #Loads database configuration
+db.init_app(app) #Connects database to Flask app
+
 
 #Read configuration from environment variables (ConfigMap)
 API_VERSION = os.getenv('API_VERSION', '1.0')
@@ -102,10 +107,73 @@ def get_user(user_id):
     else:
         return jsonify({"error": "User not found"}), 404
 
+#methods=['GET'], POST
+@app.route('/users', methods=['GET'])
+def get_user_db():
+    users = User.query.all() #Query all users (Basically how you get the data in db out)
+    jsonify([
+        users.to_dict() for user in users #user is basically just the temp variable in the for loop used to define each iteration (same as using i in a for loop)
+
+    ])
+
+@app.route('/users', methods=['POST'])
+def create_user():
+    data = request.get_json() #Gets json data from request body (using request module)
+
+
+    #Validation n dat
+    if not data or 'username' not in data or 'email' not in data:
+        return jsonify({
+            'error': 'Missing Username or Email'
+        }), 400
+    
+    try:
+        new_user = User(
+            username=data['username'],
+            email=data['email']
+        )
+        db.session.add(new_user)
+        db.session.commit
+        return jsonify(new_user.to_dict()), 201
+    except Exception as e:
+        db.session.rollback() #Rollback if there's an error
+        return jsonify({
+            'error': str(e)
+        }), 400
+
+@app.route('/users/<int:id>', methods=['GET'])
+def get_user_by_id(id):
+    #Get a specific user from database
+    user = User.query.get_or_404(id) #Gets user or returns 404
+    return jsonify(user.to_dict())
+
+@app.route('/users/<int:id>', methods=['POST'])
+#Deleting a user from db
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    try:
+        db.session.delete(user) #Staging deletion of user
+        db.session.commit() #Actually deletes it
+        return '', 204 #Returns empty response with no content
+    except Exception as e:
+        db.session.rollback() 
+        return jsonify({
+            'error': str(e)
+        }), 400
+
+
+
 
 if __name__ == '__main__':
     print(f"Starting Flask API {API_VERSION} in {ENVIRONMENT} mode")
     print(f"Log Level: {LOG_LEVEL}")
     print(f"Pod Name: {os.environ.get('HOSTNAME', 'localhost')}")
     print(f"Secrets loaded: DB={bool(DATABASE_PASSWORD)}, API={bool(API_KEY)}, JWT={bool(JWT_SECRET)}")
+
+    #Creates database tables if they don't exist already
+    with app.app_context():
+        db.create_all()
+        print("Database tables created/verified")
+    
     app.run(host="0.0.0.0", port=5000, debug=(ENVIRONMENT == 'development'))
+    
