@@ -109,10 +109,10 @@ def get_user(user_id):
 
 #methods=['GET'], POST
 @app.route('/users', methods=['GET'])
-def get_user_db():
+def get_users():
     users = User.query.all() #Query all users (Basically how you get the data in db out)
-    jsonify([
-        users.to_dict() for user in users #user is basically just the temp variable in the for loop used to define each iteration (same as using i in a for loop)
+    return jsonify([
+        user.to_dict() for user in users #user is basically just the temp variable in the for loop used to define each iteration (same as using i in a for loop)
 
     ])
 
@@ -133,7 +133,7 @@ def create_user():
             email=data['email']
         )
         db.session.add(new_user)
-        db.session.commit
+        db.session.commit()
         return jsonify(new_user.to_dict()), 201
     except Exception as e:
         db.session.rollback() #Rollback if there's an error
@@ -147,7 +147,7 @@ def get_user_by_id(id):
     user = User.query.get_or_404(id) #Gets user or returns 404
     return jsonify(user.to_dict())
 
-@app.route('/users/<int:id>', methods=['POST'])
+@app.route('/users/<int:id>', methods=['DELETE'])
 #Deleting a user from db
 def delete_user(id):
     user = User.query.get_or_404(id)
