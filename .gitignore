@@ -47,11 +47,11 @@ Desktop.ini
 .settings/
 
 # Kubernetes Secrets - NEVER COMMIT THESE!
-k8s/*-secret.yaml
-k8s/*-secret.yml
-*-secret.yaml
-*-secret.yml
+k8s/*secret*.yml
+k8s/*secret*.yaml
 secrets/
+!k8s/*secret*.example.yml
+
 
 # Docker
 .dockerignore

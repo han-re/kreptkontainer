@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec: 
+  type: ClusterIP #Different to NodePort - this only exposes Postgres within the cluster only.
+  selector:
+    app: postgres
+  ports:
+    - port: 5432 #Service Port  
+      targetPort: 5432 #Container Port
+  

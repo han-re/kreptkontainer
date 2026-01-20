@@ -11,3 +11,9 @@ data:
   LOG_LEVEL: "INFO"
   MAX_CONNECTIONS: "100"
   FEATURE_FLAG_NEW_UI: "true"
+
+  # Database settings (non-sensitive) for Postgres connection
+  DATABASE_HOST: "postgres-service" #kubernetes service dns name
+  DATABASE_PORT: "5432" #postgres default
+  DATABASE_NAME: "kreptkon" #db created at postgres startup
+  DATABASE_USER: "kreptuser" #db user

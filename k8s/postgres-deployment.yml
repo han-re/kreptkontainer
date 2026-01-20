@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment #Naming deployment resource
+spec: #entire section describes what you want, not how to do it. (desired state)
+  replicas: 1 #Why 1? Postgres shouldn't have multiple writers. Multiple writers = data corruption risk
+  selector: #Pod selection logic, tells deployment to manage pods with label app = postgres
+    matchLabels:
+      app: postgres
+  template: #Blueprint for pods created by deployment 
+    metadata:
+      labels: #applying labels to pods, so that later services can find them 
+        app: postgres
+    spec: #desired state of pod 
+      containers: #container definition (- used for lists)
+        - name: postgres
+          image: postgres:15-alpine #docker image to run (alpine = lightweight linux)
+          ports:
+            - containerPort: 5432 #Documents which port postgres listens on, doesn't expose db, just helps service to route traffic
+          envFrom: #Used to have postgres startup info here but moved it to secret file so credentials aren't hardcoded 
+            - secretRef:
+                name: postgres-secret
+          volumeMounts: #Tells container to mount a volume called postgres-storage at this directory (So postgres writes all data here)
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+
