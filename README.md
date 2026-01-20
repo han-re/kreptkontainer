@@ -1,121 +1,200 @@
-# KreptKon - Docker & Kubernetes Learning Project
+# KreptKon – Docker & Kubernetes Learning Project
 
-Learning Docker and Kubernetes by building and deploying a Flask API. This project follows a roadmap to go from basic Flask to a fully orchestrated Kubernetes deployment.
+KreptKon is a hands-on learning project where I'm building a Flask API and progressively containerizing and deploying it using Docker and Kubernetes. The project follows a structured day-by-day roadmap, moving from a basic local Flask app to a production-ready deployment on AWS EKS with RDS PostgreSQL.
 
-## What Is It?
-
-A simple Flask API that I've containerised with Docker and deployed to Kubernetes (using Minikube). The app runs across multiple pods with load balancing, and I've added ConfigMaps and Secrets for configuration management.
-
-**Stack:**
-- Python 3.11 + Flask
-- Docker
-- Kubernetes (Minikube)
-- ConfigMaps & Secrets
+The focus is on **understanding real-world backend infrastructure concepts**, not just getting something running.
 
 ---
 
-## Quick Start
+## What Is It?
 
-### Prerequisites
-- Python 3.11+
-- Docker Desktop or Minikube
-- kubectl CLI
+A Flask-based REST API that:
+- Runs locally, in Docker, and in Kubernetes (Minikube → AWS EKS)
+- Scales across multiple pods with load balancing
+- Uses PostgreSQL for persistent data storage (local → AWS RDS)
+- Uses Kubernetes ConfigMaps and Secrets for configuration management
+- Deploys to AWS with ECR, EKS, and RDS
+- Survives pod restarts without data loss
 
-## Running Locally
+This project is designed as a **learning reference** and a **portfolio piece** demonstrating backend, containerization, orchestration, and cloud infrastructure fundamentals.
 
+---
+
+## Tech Stack
+
+- **Python 3.11**
+- **Flask + SQLAlchemy**
+- **PostgreSQL 15**
+- **Docker & Docker Compose**
+- **Kubernetes (Minikube → AWS EKS)**
+- **AWS Services (ECR, EKS, RDS)**
+- **ConfigMaps & Secrets**
+- **Persistent Volumes (PVC)**
+
+---
+
+## Project Structure
+```
+KREPTKON/
+├── backend/
+│   ├── app.py
+│   ├── models.py
+│   ├── config.py
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── venv/
+├── k8s (kubernetes)/
+│   ├── configmap.yaml
+│   ├── secrets.yaml
+│   ├── postgres-pvc.yaml
+│   ├── postgres-deployment.yaml
+│   ├── postgres-service.yaml
+│   ├── flask-api-deployment.yaml
+│   ├── flask-api-service.yaml
+│   ├── secrets-aws.yaml (in-development)
+│   ├── configmap-aws.yaml (in-development)
+│   ├── flask-api-deployment-aws.yaml (in-development)
+│   └── flask-api-service-aws.yaml (in-development)
+├── docker-compose.yml
+├── eks-cluster-config.yaml (in-development)
+├── img/
+└── README.md
+```
+
+> ⚠️ Secret files containing real credentials are **not committed**. Example files are provided instead.
+
+---
+
+## Running Locally (No Docker)
 ```bash
 git clone <your-repo-url>
 cd KreptKon/backend
 
-# Set up virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
-# Install and run
-pip3 install -r requirements.txt
-python3 app.py
+pip install -r requirements.txt
+python app.py
 ```
 
-Access at http://localhost:5000
-
-## Running with Docker
-
-```bash
-cd backend
-docker build -t flask-api:latest .
-docker run -p 5000:5000 flask-api:latest
-```
-
-## Running on Kubernetes
-
-```bash
-# Start Minikube
-minikube start
-
-# Build image in Minikube
-eval $(minikube docker-env)
-cd backend
-docker build -t flask-api:latest .
-
-# Deploy everything
-cd ..
-kubectl apply -f k8s/flask-configmap.yaml
-kubectl apply -f k8s/flask-secret.yaml
-kubectl apply -f k8s/flask-api-deployment-updated.yml
-kubectl apply -f k8s/flask-api-service.yml
-
-# Get the URL
-minikube service flask-api-service --url
-```
-
-## API Endpoints
-
-- `/hello` - Basic greeting with pod info
-- `/status` - API status and config
-- `/config` - Shows all configuration values
-- `/data` - Sample user data
-- `/user/<id>` - Get specific user
-
-## What I Did/Learned
-
-**Day 1-2: Project Setup**
-- Created Flask API with multiple endpoints
-- Set up Python virtual environment
-- Installed dependencies and created requirements.txt
-
-**Day 3-4: Dockerisation**
-- Wrote Dockerfile to containerise the Flask app
-- Built and ran Docker containers
-- Debugged containerised application
-- Learned Docker commands: `build`, `run`, `ps`, `exec`
-
-**Day 5: Version Control**
-- Initialised Git repository
-- Created GitHub repository and pushed code
-- Learned Git workflow: `init`, `add`, `commit`, `push`
+Access at: http://localhost:5000
 
 ---
 
+## Running Locally with Docker Compose
 
+This setup runs Flask + PostgreSQL locally using Docker Compose.
+```bash
+docker-compose up --build
+```
 
-**Day 6: Kubernetes Introduction**
-- Installed Minikube
-- Learned core concepts: Pods, Nodes, Clusters
-- Ran test pods to understand basic operations
-- Understood why Kubernetes is needed: scaling, self-healing, load balancing
+Test endpoints:
+```bash
+curl http://localhost:5000/hello
+curl http://localhost:5000/users
 
-**Day 7: Deployments**
-- Created Kubernetes Deployment with 2 replicas
-- Learned about ReplicaSets and pod management
-- Understood labels and selectors
-- Experienced automatic pod recovery (self-healing)
+curl -X POST http://localhost:5000/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com"}'
+```
 
-**Day 8: Services & Networking**
-- Created NodePort Service to expose the API
-- Understood Kubernetes networking and load balancing
-- Added pod identification to API responses (pod name and IP)
-- Verified traffic distribution across multiple pods
-- Learned about NAT in Kubernetes networking
+---
+
+## Running on Kubernetes (Minikube)
+
+### Prerequisites
+
+- Docker
+- Minikube
+- kubectl
+
+### Deploy to Minikube
+```bash
+# Start Minikube and build image
+minikube start
+eval $(minikube docker-env)
+
+cd backend
+docker build -t flask-api:latest .
+cd ..
+
+# Deploy Kubernetes resources
+kubectl apply -f kubernetes/configmap.yaml
+kubectl apply -f kubernetes/secrets.yaml
+kubectl apply -f kubernetes/postgres-pvc.yaml
+kubectl apply -f kubernetes/postgres-deployment.yaml
+kubectl apply -f kubernetes/postgres-service.yaml
+kubectl apply -f kubernetes/flask-api-deployment.yaml
+kubectl apply -f kubernetes/flask-api-service.yaml
+
+# Access the API
+minikube service flask-api-service --url
+```
+
+---
+
+## In-Development
+## Running on AWS EKS
+
+### Prerequisites
+
+- AWS CLI configured
+- eksctl installed
+- kubectl installed
+
+### Deploy to EKS
+```bash
+# Create EKS cluster
+eksctl create cluster -f eks-cluster-config.yaml
+
+# Deploy to EKS
+kubectl apply -f kubernetes/secrets-aws.yaml
+kubectl apply -f kubernetes/configmap-aws.yaml
+kubectl apply -f kubernetes/flask-api-deployment-aws.yaml
+kubectl apply -f kubernetes/flask-api-service-aws.yaml
+
+# Get LoadBalancer URL
+kubectl get svc flask-api-service
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /hello | Basic greeting with pod info |
+| GET | /status | API status and database connection |
+| GET | /users | List all users |
+| POST | /users | Create a new user |
+| GET | /users/<id> | Get user by ID |
+| DELETE | /users/<id> | Delete a user |
+
+---
+
+## Learning Roadmap
+
+### Days 1–11: Foundations (Phase 1)
+
+**What I built:**
+- Flask API with multiple endpoints
+- Docker containerization with Dockerfile
+- Kubernetes deployments on Minikube
+- ConfigMaps and Secrets for configuration
+- Scaling and self-healing demonstrations
+
+**Key learning points:**
+- Docker fundamentals: build, run, exec, ps
+- Kubernetes core concepts: Pods, Deployments, Services, ReplicaSets
+- Load balancing across multiple pods
+- Zero-downtime deployments and auto-recovery
+- Configuration management without rebuilding images
+
+**Outcome:**
+- Flask app running in Kubernetes with 2-4 replicas
+- NodePort service exposing the API
+- Dynamic scaling working (2→4→2 replicas)
+- Pod self-healing verified
 
 **Day 9: Scaling & Resilience**
 - Scaled deployment from 2 to 4 replicas
@@ -124,19 +203,7 @@ minikube service flask-api-service --url
 
 ![Scaling Demo](img/k8s_day9.png)
 
----
-
-**Day 10: Documentation**
-Cleaned up the README and added screenshots.
-
 **Day 11: Configuration Management**
-This is where it got interesting. Instead of hardcoding values in the app, I:
-- Created a ConfigMap for things like API version, environment, log level
-- Created a Secret for sensitive stuff (database passwords, API keys)
-- Updated the Flask app to read from environment variables
-- Modified the Kubernetes deployment to inject these values
-
-The cool part: I can now change configuration values without rebuilding the Docker image. Just edit the ConfigMap, restart the pods, and the new values are loaded.
 
 **ConfigMap and Secret in Kubernetes:**
 
@@ -154,105 +221,219 @@ The cool part: I can now change configuration values without rebuilding the Dock
 
 ![Load Balancing](img/k8s_day11_loadbalancing.png)
 
-## ConfigMap Example
+---
 
+### Day 12 – PostgreSQL Integration (Local)
+
+**Goal:** Add PostgreSQL to the Flask app and run everything locally using Docker Compose.
+
+**What I implemented:**
+- SQLAlchemy models for database entities
+- Database configuration via environment variables
+- CRUD API endpoints for user management
+- Docker Compose setup with Flask + PostgreSQL services
+- Volume mounting for database persistence
+
+**Key learning points:**
+- SQLAlchemy ORM basics: models, sessions, queries
+- Flask-SQLAlchemy integration patterns
+- Docker Compose networking and service dependencies
+- Environment variable injection in containers
+- Database connection string formats
+
+**Outcome:**
+- Flask successfully connected to PostgreSQL
+- Full CRUD operations working locally
+- Data persisted across container restarts
+- Multi-container orchestration with Docker Compose
+
+---
+
+### Day 13 – Kubernetes PostgreSQL + Persistence (Phase 2 – Day 2)
+
+**Goal:** Run PostgreSQL inside Kubernetes and connect multiple Flask pods to it with persistent storage.
+
+**What I implemented:**
+- PostgreSQL Deployment (single replica)
+- PostgreSQL ClusterIP Service for internal networking
+- PersistentVolumeClaim for database storage
+- ConfigMap for non-sensitive database configuration
+- Secrets for credentials and connection strings
+- Updated Flask Deployment to consume Kubernetes config
+- Verified data persistence after pod restarts
+
+**Key learning points:**
+- Why databases need persistent storage in Kubernetes
+- PersistentVolume vs PersistentVolumeClaim lifecycle
+- StatefulSets vs Deployments for stateful applications
+- Kubernetes DNS and service discovery (using service names)
+- Debugging CrashLoopBackOff and volume mount issues
+- Separation of ConfigMaps (public config) vs Secrets (sensitive data)
+
+**Outcome:**
+- PostgreSQL running in Kubernetes with persistent storage
+- Multiple Flask pods successfully connecting to single PostgreSQL instance
+- CRUD operations working through Kubernetes service
+- Data survives pod deletions and restarts
+- No data loss during scaling operations
+
+---
+
+### Next Steps: AWS Deployment (Days 14-18)
+
+Planning to complete:
+- **Day 14:** Set up AWS account, create ECR repository, and push Docker images to AWS
+- **Day 15:** Create EKS cluster with eksctl for production Kubernetes environment
+- **Day 16:** Deploy RDS PostgreSQL instance for managed database with automated backups
+- **Day 17:** Configure security groups and VPC networking for EKS-RDS communication, deploy Flask app to EKS with LoadBalancer
+- **Day 18:** Add CloudWatch monitoring and logging, create architecture diagrams, finalize documentation
+
+---
+
+## Common Kubernetes Commands
+```bash
+# View all resources
+kubectl get all
+
+# View pods with details
+kubectl get pods -o wide
+
+# Check persistent volume claims
+kubectl get pvc
+
+# View application logs
+kubectl logs -l app=flask-api
+kubectl logs -l app=postgres
+
+# Restart deployment
+kubectl rollout restart deployment flask-api-deployment
+
+# Scale deployment
+kubectl scale deployment flask-api-deployment --replicas=4
+
+# Access Minikube dashboard
+minikube dashboard
+```
+
+---
+
+## ConfigMap & Secrets Example
+
+### ConfigMap (Non-sensitive configuration)
 ```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: flask-api-configmap
+  name: flask-config
 data:
-  API_VERSION: "v1.0"
-  ENVIRONMENT: "development"
-  LOG_LEVEL: "INFO"
+  FLASK_ENV: "production"
+  DATABASE_HOST: "postgres-service"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "kreptkon"
 ```
 
-Update it live:
+Update live:
 ```bash
-kubectl edit configmap flask-api-configmap
-# Change values
+kubectl edit configmap flask-config
 kubectl rollout restart deployment flask-api-deployment
 ```
 
-## Project Structure
-
-```
-KREPTKON/
-├── backend/
-│   ├── app.py
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── venv/
-├── k8s/
-│   ├── flask-api-deployment-updated.yml
-│   ├── flask-api-service.yml
-│   ├── flask-configmap.yaml
-│   └── flask-secret.yaml (not committed)
-├── img/
-└── README.md
+### Secrets (Sensitive data)
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secrets
+type: Opaque
+stringData:
+  POSTGRES_USER: user
+  POSTGRES_PASSWORD: password
+  DATABASE_URL: postgresql://user:password@postgres-service:5432/kreptkon
 ```
 
-## Troubleshooting Notes
+---
 
-**Pods not starting?**
+## Troubleshooting
+
+### Pods not starting?
 ```bash
 kubectl logs <pod-name>
 kubectl describe pod <pod-name>
 ```
 
-**Image not found in Minikube?**
+### Image not found in Minikube?
+
 Make sure you built it in Minikube's Docker daemon:
 ```bash
 eval $(minikube docker-env)
 docker build -t flask-api:latest .
 ```
 
-**Service not accessible?**
+### Service not accessible?
 ```bash
 minikube service flask-api-service --url
 ```
 
-## Useful Commands
-
+### Database connection issues?
 ```bash
-# Check everything
-kubectl get all
+# Check PostgreSQL pod logs
+kubectl logs -l app=postgres
 
-# Scale deployment
-kubectl scale deployment flask-api-deployment --replicas=5
+# Verify secrets are loaded
+kubectl get secret postgres-secrets -o yaml
 
-# View logs
-kubectl logs -l app=flask-api --tail=20
-
-# Restart pods
-kubectl rollout restart deployment flask-api-deployment
-
-# Access Minikube dashboard
-minikube dashboard
+# Test connection from Flask pod
+kubectl exec -it <flask-pod-name> -- sh
+# Inside pod:
+# python
+# from models import db
+# db.session.execute('SELECT 1')
 ```
+
+### PersistentVolumeClaim issues?
+```bash
+# Check PVC status
+kubectl get pvc
+
+# Describe PVC for events
+kubectl describe pvc postgres-pvc
+
+# If corrupted, delete and recreate
+kubectl delete pvc postgres-pvc
+kubectl apply -f kubernetes/postgres-pvc.yaml
+```
+
+---
 
 ## Things I Found Tricky
 
 1. **Minikube image caching** - Had to make sure I was building in Minikube's Docker daemon, not my local one
 2. **ConfigMap indentation** - YAML is very picky about spaces
-3. **Port 5000 conflict on Mac** - Had to disable AirPlay Receiver
+3. **Port 5000 conflict on Mac** - Had to disable AirPlay Receiver in System Preferences
 4. **Understanding when pods pick up new config** - They don't automatically reload, need to restart them
+5. **PostgreSQL persistent storage** - Took time to understand PersistentVolumes vs PersistentVolumeClaims and reclaim policies
+6. **Database connection strings** - Service names in Kubernetes act as DNS, learned to use `postgres-service` instead of `localhost`
+7. **PostgreSQL crashing due to corrupted PVC data** - Had to delete and recreate PVC when data got corrupted
+8. **PVC deletion and finalizers** - Understanding why PVCs sometimes get stuck in "Terminating" state
 
-## Next Steps
+---
 
-Planning to add:
-- Database integration (PostgreSQL)
-- Health checks
-- Maybe a simple frontend
-- Try deploying to a cloud provider
+## Security Notes
 
-## Notes
+Secret files are ignored via `.gitignore` and not committed to the repository.
 
-The secret files (flask-secret.yaml) aren't committed to Git for security reasons. If you clone this repo, you'll need to create your own secrets:
-
+### For local Kubernetes development:
 ```bash
-kubectl create secret generic flask-api-secret \
-  --from-literal=DATABASE_PASSWORD=yourpassword \
-  --from-literal=API_KEY=yourapikey \
-  --from-literal=JWT_SECRET=yourjwtsecret
+kubectl create secret generic postgres-secrets \
+  --from-literal=POSTGRES_USER=user \
+  --from-literal=POSTGRES_PASSWORD=yourpassword \
+  --from-literal=DATABASE_URL=postgresql://user:yourpassword@postgres-service:5432/kreptkon
 ```
+
+### For AWS deployment:
+
+AWS credentials and sensitive configuration stored in `.env` file (also gitignored).
+
+---
+
+**Note:** This is a learning project demonstrating containerization, orchestration, and cloud deployment patterns. Not production-ready without additional security hardening, monitoring, CI/CD pipelines, and proper secret management solutions like AWS Secrets Manager or HashiCorp Vault.
