@@ -61,6 +61,12 @@ spec:
                 secretKeyRef:
                   name: flask-api-secret
                   key: JWT_SECRET
+            
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DATABASE_URL
 
           
 

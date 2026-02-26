@@ -28,6 +28,7 @@ services:
       API_VERSION: "2.0-with-database"
       ENVIRONMENT: "development"
       LOG_LEVEL: "INFO"
+      ENABLE_DB: "true"
     depends_on:
       postgres:
         condition: service_healthy

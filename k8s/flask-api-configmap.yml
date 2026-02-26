@@ -11,6 +11,7 @@ data:
   LOG_LEVEL: "INFO"
   MAX_CONNECTIONS: "100"
   FEATURE_FLAG_NEW_UI: "true"
+  ENABLE_DB: "true"
 
   # Database settings (non-sensitive) for Postgres connection
   DATABASE_HOST: "postgres-service" #kubernetes service dns name

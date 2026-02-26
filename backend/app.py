@@ -171,9 +171,10 @@ if __name__ == '__main__':
     print(f"Secrets loaded: DB={bool(DATABASE_PASSWORD)}, API={bool(API_KEY)}, JWT={bool(JWT_SECRET)}")
 
     #Creates database tables if they don't exist already
-    with app.app_context():
-        db.create_all()
-        print("Database tables created/verified")
+    if os.getenv("ENABLE_DB", "false").lower() == "true":
+        with app.app_context():
+            db.create_all()
+            print("Database tables created/verified")
     
     app.run(host="0.0.0.0", port=5000, debug=(ENVIRONMENT == 'development'))
     
