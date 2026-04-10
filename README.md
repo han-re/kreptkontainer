@@ -37,22 +37,21 @@ KREPTKON/
 │   ├── models.py
 │   ├── config.py
 │   ├── Dockerfile
-│   ├── requirements.txt
-│   └── venv/
-├── kubernetes/
-│   ├── configmap.yaml
-│   ├── secrets.yaml
-│   ├── postgres-pvc.yaml
-│   ├── postgres-deployment.yaml
-│   ├── postgres-service.yaml
-│   ├── flask-api-deployment.yaml
-│   ├── flask-api-service.yaml
-│   ├── secrets-aws.yaml
-│   ├── configmap-aws.yaml
-│   ├── flask-api-deployment-aws.yaml
-│   └── flask-api-service-aws.yaml
+│   └── requirements.txt
+├── k8s/
+│   ├── flask-api-configmap.yml
+│   ├── flask-api-deployment-updated.yml
+│   ├── flask-api-deployment-aws.yml
+│   ├── flask-api-service.yml
+│   ├── flask-api-service-aws.yml
+│   ├── flask-api-secret.example.yml
+│   ├── postgres-deployment.yml
+│   ├── postgres-pvc.yml
+│   ├── postgres-service.yml
+│   ├── postgres-secret.example.yml
+│   └── rds-secret.example.yml
 ├── docker-compose.yml
-├── eks-cluster-config.yaml
+├── eks-cluster-config.yml
 ├── img/
 └── README.md
 ```
@@ -88,13 +87,13 @@ cd backend
 docker build -t flask-api:latest .
 cd ..
 
-kubectl apply -f kubernetes/configmap.yaml
-kubectl apply -f kubernetes/secrets.yaml
-kubectl apply -f kubernetes/postgres-pvc.yaml
-kubectl apply -f kubernetes/postgres-deployment.yaml
-kubectl apply -f kubernetes/postgres-service.yaml
-kubectl apply -f kubernetes/flask-api-deployment.yaml
-kubectl apply -f kubernetes/flask-api-service.yaml
+kubectl apply -f k8s/flask-api-configmap.yml
+kubectl apply -f k8s/flask-api-secret.yml
+kubectl apply -f k8s/postgres-pvc.yml
+kubectl apply -f k8s/postgres-deployment.yml
+kubectl apply -f k8s/postgres-service.yml
+kubectl apply -f k8s/flask-api-deployment-updated.yml
+kubectl apply -f k8s/flask-api-service.yml
 
 minikube service flask-api-service --url
 ```
@@ -117,9 +116,7 @@ aws ecr create-repository --repository-name kreptkon/flask-api --region us-east-
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
 
-docker build -t flask-api:latest backend/
-docker tag flask-api:latest <ecr-uri>:latest
-docker push <ecr-uri>:latest
+docker buildx build --platform linux/amd64 -t <ecr-uri>:latest --push backend/
 ```
 
 ### 2. Create EKS cluster
@@ -143,10 +140,11 @@ Create the RDS instance in the same VPC as the EKS cluster, with a security grou
 Update the AWS secret and config files with your RDS endpoint and ECR URI, then apply:
 
 ```bash
-kubectl apply -f kubernetes/secrets-aws.yaml
-kubectl apply -f kubernetes/configmap-aws.yaml
-kubectl apply -f kubernetes/flask-api-deployment-aws.yaml
-kubectl apply -f kubernetes/flask-api-service-aws.yaml
+kubectl apply -f k8s/flask-api-configmap.yml
+kubectl apply -f k8s/flask-api-secret.yml
+kubectl apply -f k8s/rds-secret.yml
+kubectl apply -f k8s/flask-api-deployment-aws.yml
+kubectl apply -f k8s/flask-api-service-aws.yml
 ```
 
 ### 5. Access the API
