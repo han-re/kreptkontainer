@@ -3,12 +3,21 @@ from models import db, User
 from config import Config
 import os
 import socket
+import logging
+import sys
 
 app = Flask(__name__)
 #creating instance of flask application
 #Python built in that represents the name of the current module
 app.config.from_object(Config) #Loads database configuration
 db.init_app(app) #Connects database to Flask app
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
 
 
 #Read configuration from environment variables (ConfigMap)
@@ -36,8 +45,9 @@ def pod_data(data):
     }
 
 @app.route('/hello')
-#route decorater - 
+#route decorater -
 def hello():
+    logger.info("GET /hello pod=%s", os.environ.get("HOSTNAME", "unknown"))
     return jsonify({
         "message": "Hello from Flask, Yessir!",
         "version": API_VERSION,
@@ -49,6 +59,7 @@ def hello():
 
 @app.route('/status')
 def status():
+    logger.info("GET /status pod=%s", os.environ.get("HOSTNAME", "unknown"))
     return jsonify({
         "status": "API is running smoothly,", "version": "1.0",
         "version": API_VERSION,
@@ -110,6 +121,7 @@ def get_user(user_id):
 #methods=['GET'], POST
 @app.route('/users', methods=['GET'])
 def get_users():
+    logger.info("GET /users pod=%s", os.environ.get("HOSTNAME", "unknown"))
     users = User.query.all() #Query all users (Basically how you get the data in db out)
     return jsonify([
         user.to_dict() for user in users #user is basically just the temp variable in the for loop used to define each iteration (same as using i in a for loop)
@@ -118,6 +130,7 @@ def get_users():
 
 @app.route('/users', methods=['POST'])
 def create_user():
+    logger.info("POST /users pod=%s", os.environ.get("HOSTNAME", "unknown"))
     data = request.get_json() #Gets json data from request body (using request module)
 
 
@@ -143,6 +156,7 @@ def create_user():
 
 @app.route('/users/<int:id>', methods=['GET'])
 def get_user_by_id(id):
+    logger.info("GET /users/%s pod=%s", id, os.environ.get("HOSTNAME", "unknown"))
     #Get a specific user from database
     user = User.query.get_or_404(id) #Gets user or returns 404
     return jsonify(user.to_dict())
@@ -150,6 +164,7 @@ def get_user_by_id(id):
 @app.route('/users/<int:id>', methods=['DELETE'])
 #Deleting a user from db
 def delete_user(id):
+    logger.info("DELETE /users/%s pod=%s", id, os.environ.get("HOSTNAME", "unknown"))
     user = User.query.get_or_404(id)
     try:
         db.session.delete(user) #Staging deletion of user
